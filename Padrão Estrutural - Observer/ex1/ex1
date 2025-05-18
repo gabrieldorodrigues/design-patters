@@ -1,0 +1,74 @@
+// Renomeando para BlogComment para evitar conflito com a interface DOM Comment
+interface BlogComment {
+    author: string;
+    content: string;
+    timestamp: Date;
+  }
+  
+  interface ArticleObserver {
+    update(article: Article, comment: BlogComment): void;
+  }
+  
+  class Article {
+    private observers: Set<ArticleObserver> = new Set();
+    private comments: BlogComment[] = [];
+  
+    constructor(public readonly title: string, public readonly author: string) {}
+  
+    addComment(comment: BlogComment) {
+      this.comments.push(comment);
+      this.notify(comment);
+    }
+  
+    subscribe(observer: ArticleObserver) {
+      this.observers.add(observer);
+    }
+  
+    unsubscribe(observer: ArticleObserver) {
+      this.observers.delete(observer);
+    }
+  
+    private notify(newComment: BlogComment) {
+      this.observers.forEach(observer => {
+        observer.update(this, newComment);
+      });
+    }
+  
+    getComments(): BlogComment[] {
+      return [...this.comments];
+    }
+  }
+  
+  class User implements ArticleObserver {
+    private subscribedArticles: Set<Article> = new Set();
+  
+    subscribeTo(article: Article) {
+      article.subscribe(this);
+      this.subscribedArticles.add(article);
+      console.log(`Usuário inscrito no artigo: "${article.title}"`);
+    }
+  
+    unsubscribeFrom(article: Article) {
+      article.unsubscribe(this);
+      this.subscribedArticles.delete(article);
+      console.log(`Usuário removido do artigo: "${article.title}"`);
+    }
+  
+    update(article: Article, comment: BlogComment) {
+      console.log(`Novo comentário em "${article.title}" por ${comment.author}:`);
+      console.log(`> ${comment.content}`);
+      console.log(`---`);
+    }
+  }
+  
+  // Uso corrigido
+  const article = new Article("Padrões de Design", "João Silva");
+  const user1 = new User();
+  
+  user1.subscribeTo(article);
+  
+  article.addComment({
+    author: "Maria Souza",
+    content: "Ótimo artigo! Bem explicado.",
+    timestamp: new Date()
+  } as BlogComment); // Type assertion para garantir o tipo correto
